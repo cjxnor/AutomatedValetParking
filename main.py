@@ -133,6 +133,8 @@ def main(file, config):
 
 
 if __name__ == '__main__':
+    # # argparse 是 Python 标准库中用于处理命令行参数的模块，能够自动生成帮助信息并解析参数
+    # 在使用 --help 或 -h 查看帮助信息时，"hybridAstar"会显示出来
     parser = argparse.ArgumentParser(description='hybridAstar')
     parser.add_argument("--config_name", type=str, default="config")
     parser.add_argument("--case_name", type=str, default="Case2")
@@ -142,6 +144,7 @@ if __name__ == '__main__':
 
     # initial
     # load configure file to a dict
+    # 在项目目录/confg/read_config.py中
     config = read_config.read_config(config_name=args.config_name)
 
     # read benchmark case
@@ -153,7 +156,7 @@ if __name__ == '__main__':
     elif (args.mode == 1):
         data_save_name = 'Solution_' + case_name
         data_save_path = config['save_path']
-
+        print(data_save_path)
         save_fig_path = os.path.join(config['pic_path'], args.case_name)
 
         CurvePloter.plot_curve(data_save_path = data_save_path,

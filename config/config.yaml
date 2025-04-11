@@ -1,4 +1,6 @@
 ## config for hybrid a star
+## .yaml（或 .yml）是 YAML（YAML Ain't Markup Language） 格式的文件，常用于配置文件。
+## 它结构清晰、语法简洁、易读性强，比 JSON 更适合人手写
   steering_angle_num: 5 # steering angle discrete
   dt: 0.6 # s used for compute trajectory distance while expanding nodes
   Benchmark_path: BenchmarkCases # case folder name

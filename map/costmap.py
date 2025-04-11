@@ -11,6 +11,7 @@ Copyright (c) 2022 by wenqing-hnu, All Rights Reserved.
 
 
 '''
+自主泊车轨迹规划挑战赛（Trajectory Planning Competition for Automated Parking，TPCAP）
 thanks Bai Li provides the vehicle data and the map data: https://github.com/libai1943/TPCAP_demo_Python
 BSD 2-Clause License
 
@@ -131,28 +132,34 @@ class Case:
         self.obs = np.array([])
         self.vehicle = Vehicle()
 
+    # @staticmethod 是 Python 里类中用的一个 装饰器，定义一个静态方法（Static Method）
+    # 读取Case.csv文件，并保存到Case()类中
     @staticmethod
     def read(file):
         case = Case()
+        # with ... as 是一种 上下文管理器（context manager） 的语法，用来简化资源管理，比如文件操作、数据库连接、线程锁等
+        # 自动清理资源，不用手动调用 .close() 或 .release()，更安全，哪怕中途抛异常也会自动清理
         with open(file, 'r') as f:
+            # csv文件，每一行是一条记录（record），每一列是一个字段（field），字段之间用逗号 , 分隔（有时候也可能是 ;、\t 等）
             reader = csv.reader(f)
             tmp = list(reader)
             v = [float(i) for i in tmp[0]]
             case.x0, case.y0, case.theta0 = v[0:3]
             case.xf, case.yf, case.thetaf = v[3:6]
-            case.xmin = min(case.x0, case.xf) - 12
+            case.xmin = min(case.x0, case.xf) - 12  # 取起点/终点的最小值再减12，作为ROI的最小边界值
             case.xmax = max(case.x0, case.xf) + 12
             case.ymin = min(case.y0, case.yf) - 12
             case.ymax = max(case.y0, case.yf) + 12
 
-            case.obs_num = int(v[6])
-            num_vertexes = np.array(v[7:7 + case.obs_num], dtype=np.int32)
+            case.obs_num = int(v[6])    # 障碍物个数
+            num_vertexes = np.array(v[7:7 + case.obs_num], dtype=np.int32)  # 保存有几个障碍物，每个障碍物有几个角点 [4, 4, 4]
+            # cumsum 计算数组元素的累加和  7 + 3 + ([4, 8, 12] - [4, 4, 4]) * 2 = [10, 18, 26]
             vertex_start = 7 + case.obs_num + \
-                (np.cumsum(num_vertexes, dtype=np.int32) - num_vertexes) * 2
+                (np.cumsum(num_vertexes, dtype=np.int32) - num_vertexes) * 2    # * 2 是因为一个点有x,y坐标
             case.obs = []
             for vs, nv in zip(vertex_start, num_vertexes):
                 case.obs.append(
-                    np.array(v[vs:vs + nv * 2]).reshape((nv, 2), order='A'))
+                    np.array(v[vs:vs + nv * 2]).reshape((nv, 2), order='A'))    # 将取出的x,y坐标转换成nv行2列的数组
         return case
 
 
@@ -162,7 +169,7 @@ class Map:
                  file: string = None) -> None:
         self.discrete_size = discrete_size
         self.grid_index = None  # index of each grid
-        self.cost_map = np.array([], dtype=np.float64)  # cost value
+        self.cost_map = np.array([], dtype=np.float64)  # cost value, 用 NumPy 创建一个 空的 NumPy 数组，元素类型是 float64（64 位浮点数）
         self.map_position = np.array([], dtype=np.float64)  # (x,y) value
         self.case = Case.read(file)
         # math.floor: return the largest integer not greater than x
@@ -180,12 +187,12 @@ class Map:
         param: case data is obtained from the csv file
         '''
         x_index = int(
-            (self.boundary[1] - self.boundary[0]) / self.discrete_size)
+            (self.boundary[1] - self.boundary[0]) / self.discrete_size)     # xmax - xmin
         y_index = int(
-            (self.boundary[3] - self.boundary[2]) / self.discrete_size)
+            (self.boundary[3] - self.boundary[2]) / self.discrete_size)     # ymax - ymin
         self.cost_map = np.zeros((x_index, y_index), dtype=np.float64)
         # create (x,y) position
-        dx_position = np.linspace(self.boundary[0], self.boundary[1], x_index)
+        dx_position = np.linspace(self.boundary[0], self.boundary[1], x_index)  # 起始值，终止值，生成的样本数
         dy_position = np.linspace(self.boundary[2], self.boundary[3], y_index)
         self._discrete_x = dx_position[1] - dx_position[0]
         self._discrete_y = dy_position[1] - dy_position[0]
@@ -203,6 +210,7 @@ class Map:
         for i in range(0, self.case.obs_num):
             old_obstacle = self.case.obs[i]
             # delete redundant points
+            # unique() 用来找出数组中所有不重复的元素
             obstacle = np.unique(old_obstacle, axis=0)
             obstacle_point_num = len(obstacle[:, 0])
             # sort the polygan point by counterclockwise direction
