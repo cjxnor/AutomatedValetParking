@@ -29,9 +29,11 @@ def main(file, config):
     # create the park map
     park_map = costmap.Map(
         file=file, discrete_size=config['map_discrete_size'])
+    print("create park map.")
 
     # create vehicle
     ego_vehicle = costmap.Vehicle()
+    print("create vehicle.")
 
     # create path planner
     planner = path_planner.PathPlanner(config=config,
@@ -138,7 +140,7 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='hybridAstar')
     parser.add_argument("--config_name", type=str, default="config")
     parser.add_argument("--case_name", type=str, default="Case2")
-    parser.add_argument("--mode", type=int, default=1,
+    parser.add_argument("--mode", type=int, default=0,  # 将default由1改成0
                         help='0: solve this scenario, 1: load result and plot figure')
     args = parser.parse_args()
 

@@ -55,13 +55,13 @@ class Vehicle:
         self.lf = 0.96  # front hang length
         self.lr = 0.929  # rear hang length
         self.lb = 1.942  # width
-        self.max_steering_angle = 0.75  # rad
+        self.max_steering_angle = 0.75  # rad   42.9°前轮转角会不太大了 cjxTODO
         self.max_angular_velocity = 0.5  # rad/s
         self.max_acc = 1  # m/s^2
         self.max_v = 2.5  # m/s
         self.min_v = -2.5  # m/s
         self.min_radius_turn = self.lw / \
-            np.tan(self.max_steering_angle) + self.lb / 2  # m
+            np.tan(self.max_steering_angle) + self.lb / 2  # m  3.97m
 
     def create_polygon(self, x, y, theta):
         '''
@@ -144,7 +144,7 @@ class Case:
             reader = csv.reader(f)
             tmp = list(reader)
             v = [float(i) for i in tmp[0]]
-            case.x0, case.y0, case.theta0 = v[0:3]
+            case.x0, case.y0, case.theta0 = v[0:3]  # 不包含3
             case.xf, case.yf, case.thetaf = v[3:6]
             case.xmin = min(case.x0, case.xf) - 12  # 取起点/终点的最小值再减12，作为ROI的最小边界值
             case.xmax = max(case.x0, case.xf) + 12
@@ -192,15 +192,16 @@ class Map:
             (self.boundary[3] - self.boundary[2]) / self.discrete_size)     # ymax - ymin
         self.cost_map = np.zeros((x_index, y_index), dtype=np.float64)
         # create (x,y) position
-        dx_position = np.linspace(self.boundary[0], self.boundary[1], x_index)  # 起始值，终止值，生成的样本数
+        dx_position = np.linspace(self.boundary[0], self.boundary[1], x_index)  # 地图最小x，地图最大x，离散化数量
         dy_position = np.linspace(self.boundary[2], self.boundary[3], y_index)
         self._discrete_x = dx_position[1] - dx_position[0]
         self._discrete_y = dy_position[1] - dy_position[0]
         # the position of each point in the park map
-        self.map_position = (dx_position, dy_position)
+        self.map_position = (dx_position, dy_position)  # map_position是一个元组，[0]是dx_position，[1]是dy_position
         # create grid index
         self.grid_index_max = x_index*y_index
 
+    # 设置地图中被障碍物占用的单元格
     def detect_obstacle_edge(self):
         # just consider the boundary of the obstacles
         # discrete map
@@ -208,62 +209,69 @@ class Map:
 
         # get obstacles edge
         for i in range(0, self.case.obs_num):
-            old_obstacle = self.case.obs[i]
+            old_obstacle = self.case.obs[i]     # 保存了障碍物的角点x,y坐标，n行2列矩阵
             # delete redundant points
             # unique() 用来找出数组中所有不重复的元素
-            obstacle = np.unique(old_obstacle, axis=0)
-            obstacle_point_num = len(obstacle[:, 0])
+            obstacle = np.unique(old_obstacle, axis=0)  # axis = 0，按行去重，去掉old_obstacle重复的行
+            obstacle_point_num = len(obstacle[:, 0])    # 计算obstacle所有行，第0列的长度，即行数
             # sort the polygan point by counterclockwise direction
             # get the centerpoint
-            center_x = np.mean(obstacle[:, 0])
+            center_x = np.mean(obstacle[:, 0])  # 计算第0列的平均值，即x的平均值
             center_y = np.mean(obstacle[:, 1])
 
             delta_x = obstacle[:, 0] - center_x
             delta_y = obstacle[:, 1] - center_y
-            angle = np.arctan2(delta_y, delta_x) + np.pi
-            obstacle = obstacle[np.argsort(angle)]  # sort the obstacle points
+            angle = np.arctan2(delta_y, delta_x) + np.pi    # arctan2()取值范围是[-pi, pi]
+            obstacle = obstacle[np.argsort(angle)]  # sort the obstacle points, argsort得到按角度升序排序的索引
 
             for j in range(obstacle_point_num):
-                obstacle_p1 = [obstacle[j, 0], obstacle[j, 1]]
+                obstacle_p1 = [obstacle[j, 0], obstacle[j, 1]]  # [x, y]
                 if j+1 == obstacle_point_num:
                     obstacle_p2 = [obstacle[0, 0], obstacle[0, 1]]
                 else:
                     obstacle_p2 = [obstacle[j+1, 0], obstacle[j+1, 1]]
 
-                # get rotate angle
+                # get rotate angle      # 逆时针首位连接每个点，形成一个向量
                 vector_1 = [obstacle_p2[0]-obstacle_p1[0],
                             obstacle_p2[1]-obstacle_p1[1]]
 
-                rotate_angle = np.arctan2(vector_1[1], vector_1[0])
+                rotate_angle = np.arctan2(vector_1[1], vector_1[0])     # 向量的角度
 
-                rotation_matrix = np.array([[np.cos(rotate_angle), np.sin(rotate_angle)],
+                rotation_matrix = np.array([[np.cos(rotate_angle), np.sin(rotate_angle)],   # -rotate_angle的旋转矩阵
                                             [-np.sin(rotate_angle), np.cos(rotate_angle)]])
 
                 translate_matrix = np.array(vector_1).reshape([2, 1])
 
-                new_obstacle_p2 = np.dot(rotation_matrix, translate_matrix)[
+                new_obstacle_p2 = np.dot(rotation_matrix, translate_matrix)[   # 将vector_1旋转到theta=0，x轴方向
                     0].tolist()
 
                 # get positions of points on the edge
                 points_num = math.floor(
                     new_obstacle_p2[0] / self._discrete_x)
-                points_y = np.zeros(points_num)
-                points_x = np.linspace(0, new_obstacle_p2[0], points_num)
-                points_position = np.vstack((points_x, points_y))
+                points_y = np.zeros(points_num)     # 由于旋转到了x轴，所以y=0
+                points_x = np.linspace(0, new_obstacle_p2[0], points_num)   # x按discrete_x离散化
+                points_position = np.vstack((points_x, points_y))   # 按行合并points_x，points_y
 
                 _points_position = np.dot(
-                    rotation_matrix.transpose(), points_position)
+                    rotation_matrix.transpose(), points_position)   # 反方向旋转，即将points_position旋转回原来的位置
 
-                for k in range(points_num):
+                for k in range(points_num):     # 遍历每一个点
                     original_points_position = [_points_position[0][k]+obstacle_p1[0],
                                                 _points_position[1][k]+obstacle_p1[1]]
 
+                    # np.where()返回符合条件的索引  map_position[0]=dx_position
+                    # 使用 NumPy 的布尔数组时，& 表示 逻辑与，但是按位处理的。常用于数组筛选条件
+                    # 这里应该是把map_position中original_points_position位置处（地图分辨率为discrete_x）设为障碍物（代价高）
                     points_x_index = np.where((self.map_position[0] < original_points_position[0]) &
                                               (self.map_position[0] > (original_points_position[0]-self._discrete_x)))
 
+                    # map_position[1]=dy_position
                     points_y_index = np.where((self.map_position[1] < original_points_position[1]) &
                                               (self.map_position[1] > (original_points_position[1]-self._discrete_y)))
 
+                    # 只要有一个元素为 True，就返回 True，否则返回 False
+                    # any() 对于非空数组输出为True
+                    # chatgpt说any(points_x_index)和any(points_y_index)始终为True，因为这个元组本身永远非空 cjxTODO
                     if any(points_x_index) and any(points_y_index):
                         self.cost_map[int(points_x_index[0])
                                       ][int(points_y_index[0])] = 255
@@ -273,27 +281,28 @@ class Map:
         self.discrete_map()
 
         for i in range(0, self.case.obs_num):
-            obstacle = self.case.obs[i]
+            obstacle = self.case.obs[i]     # 返回obs角点(x,y)坐标
             # get the rectangle of the obstancle
             obstacle_xmin, obstacle_xmax = np.min(
-                obstacle[:, 0]), np.max(obstacle[:, 0])
+                obstacle[:, 0]), np.max(obstacle[:, 0]) # 第0列是x
             obstacle_ymin, obstacle_ymax = np.min(
-                obstacle[:, 1]), np.max(obstacle[:, 1])
-            # find map points in the rectangle
+                obstacle[:, 1]), np.max(obstacle[:, 1]) # 第1列是y
+            # find map points in the rectangle  找到障碍物内部的地图点
             near_obs_x_index = np.where((self.map_position[0] >= obstacle_xmin) & (
                 self.map_position[0] <= obstacle_xmax))
             near_obs_y_index = np.where((self.map_position[1] >= obstacle_ymin) & (
                 self.map_position[1] <= obstacle_ymax))
             # determine the near points is in the obstacle or not
             # create polygon
+            # shapely.geometry.Polygon 是 Shapely 库中用于表示二维多边形的几何类型
             poly_shape = shapely.geometry.Polygon(obstacle)
             # generate potints
-            points_x = self.map_position[0]
-            points_y = self.map_position[1]
+            points_x = self.map_position[0]     # dx_position
+            points_y = self.map_position[1]     # dy_position
             for i in near_obs_x_index[0]:
                 for j in near_obs_y_index[0]:
                     # print(points_x[i], points_y[j])
-                    point = shapely.geometry.Point(points_x[i], points_y[j])
+                    point = shapely.geometry.Point(points_x[i], points_y[j])    # 遍历地图中的每个点
                     if poly_shape.intersects(point):
                         # point in the obstacl, set the cost = 255
                         if self.cost_map[i][j] != 255:
@@ -331,6 +340,7 @@ class Map:
         param: the upper right corner of the grid position
         return: the index of this grid, its range is from 1 to x_index*y_index
         '''
+        # self.boundary[3]是ymax
         index_0 = math.floor((grid_x - self.boundary[0]) / self._discrete_x)
         index_1 = math.floor((self.boundary[3] - grid_y) / self._discrete_y) * (
             int((self.boundary[1] - self.boundary[0]) / self._discrete_x))

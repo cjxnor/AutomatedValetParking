@@ -55,9 +55,9 @@ class Dijkstra:
         # we set final node as the initial grid
         # and our goal is to find the distance(priority)
         # between the current node(terminate node) and the final node.
-        initial_grid_x = np.float64(self.final_point[0])
+        initial_grid_x = np.float64(self.final_point[0])    # 终点x
         initial_grid_y = np.float64(self.final_point[1])
-        terminate_grid_x = np.float64(node_x)
+        terminate_grid_x = np.float64(node_x)   # 起点x
         terminate_grid_y = np.float64(node_y)
         # initialize openlist and closedlist
         initial_grid_id = self.map.convert_position_to_index(initial_grid_x,
@@ -74,15 +74,16 @@ class Dijkstra:
     def update_closedlist(self):
         # find the minimum distance in the openlist and
         # add it into the closedlist
-        next_grid = self.open_list.get()
+        next_grid = self.open_list.get()    # 优先队列
         if next_grid.grid_id == self.terminate_grid_id:
             self.find_terminate = True
         self.closedlist.append(next_grid)
 
         return next_grid
 
+    # 扩展8个方向的node
     def update_openlist(self, current_grid: Grid = None):
-        # compute the near grids info
+        # compute the near grids info   8个相邻node
         for i in range(8):
             # left upper grid
             if i == 0:
@@ -91,10 +92,10 @@ class Dijkstra:
                 # check is obstacle
                 if self.is_obstacle(grid_x, grid_y):
                     continue
-                # check the grid whether in the map
+                # check the grid whether in the map     因为上当前node的左上点，所以不检测x的上界和y的下界
                 if grid_x >= self.map.boundary[0] and \
                    grid_y <= self.map.boundary[3]:
-                    priority = current_grid.distance + 14
+                    priority = current_grid.distance + 14   # 斜方向代价+14
                     self.add_grid_to_openlist(gridx=grid_x, gridy=grid_y,
                                               priority=priority,
                                               father_id=current_grid.grid_id)
@@ -106,9 +107,9 @@ class Dijkstra:
                 # check is obstacle
                 if self.is_obstacle(grid_x, grid_y):
                     continue
-                # check the grid whether in the map
+                # check the grid whether in the map     只检测y上界
                 if grid_y <= self.map.boundary[3]:
-                    priority = current_grid.distance + 10
+                    priority = current_grid.distance + 10   # 垂直/水平方向代价+10
                     self.add_grid_to_openlist(gridx=grid_x, gridy=grid_y,
                                               priority=priority,
                                               father_id=current_grid.grid_id)
@@ -197,27 +198,28 @@ class Dijkstra:
     # run this function to get the heuristic value
     def compute_path(self, node_x, node_y):
         '''
-        input:  the current node in park map 
+        input:  the current node in park map    从起点开始
         return: the heuristic value and the closedlist
         Note:   closedlist contains the info(mainly distance) 
                 about those grid has been explored
         '''
         # initial map
         self.find_terminate = False
-        current_grid = self.initial_map(node_x, node_y)
+        current_grid = self.initial_map(node_x, node_y) # 返回终点，从终点开始
         while not self.find_terminate:
             # expand grid and update openlist
             self.update_openlist(current_grid)
             # get the next grid
-            current_grid = self.update_closedlist()
+            current_grid = self.update_closedlist() # current_grid是代价最小的grid
 
+        # 退出while的current_grid是起点
         return current_grid.distance, self.closedlist
 
     def add_grid_to_openlist(self, gridx, gridy, priority, father_id):
         index = self.map.convert_position_to_index(gridx, gridy)
         # check this grid is firstly visited or not
         # if it exits, change its value
-        if self.openlist_index.count(index):
+        if self.openlist_index.count(index):    # count()统计index在list中出现的次数
             # find the previous priority
             for i in range(self.open_list.queue.__len__()):
                 if self.open_list.queue[i].grid_id == index:

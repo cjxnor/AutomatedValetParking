@@ -72,6 +72,7 @@ class collision_checker:
 
         return near_obstacle_range, vehicle_boundary
 
+    # 抽象方法，作用是强制子类必须实现这个方法，否则实例化子类会报错
     @abstractmethod
     def check(self, node_x, node_y, theta) -> bool:
         pass
@@ -137,9 +138,10 @@ class two_circle_checker(collision_checker):
         return collision
 
 
+# 父类是collision_checker
 class distance_checker(collision_checker):
     def __init__(self, map: Map, vehicle: Vehicle = None, config: dict = None) -> None:
-        super().__init__(map, vehicle, config)
+        super().__init__(map, vehicle, config)  # 调用父类的构造方法
 
     def check(self, node_x, node_y, theta) -> bool:
         '''

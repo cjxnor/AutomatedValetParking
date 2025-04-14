@@ -80,7 +80,7 @@ class hybrid_a_star:
         # discrete steering angle
         self.steering_angle = np.linspace(- self.vehicle.max_steering_angle,
                                           self.vehicle.max_steering_angle,
-                                          config['steering_angle_num'])  # rad
+                                          config['steering_angle_num'])  # rad  steering_angle_num: 5
 
         # park_map
         self.park_map = park_map
@@ -88,7 +88,7 @@ class hybrid_a_star:
         # caculate heuristic and store h value
         self.heuristic = Dijkstra(park_map)
         _, self.h_value_list = self.heuristic.compute_path(
-            node_x=park_map.case.x0, node_y=park_map.case.y0)
+            node_x=park_map.case.x0, node_y=park_map.case.y0)   # (x0, y0)是起点的坐标
 
         # default settings
         self.global_index = 0
