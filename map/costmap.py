@@ -93,8 +93,9 @@ class Vehicle:
 
         # local point and expand this square
         # expand the collision check box
-        side_dis = config['safe_side_dis']  # m
-        fr_dis = config['safe_fr_dis']  # m
+        side_dis = config['safe_side_dis']  # safe_side_dis: 0.1m
+        fr_dis = config['safe_fr_dis']  # safe_fr_dis: 0.1m
+        # 车辆右后角点坐标[x,y] x前为正，y左为正
         right_rear = np.array([[-self.lr-fr_dis], [-self.lb/2-side_dis]])
         right_front = np.array(
             [[self.lw+self.lf+fr_dis], [-self.lb/2-side_dis]])
@@ -104,6 +105,7 @@ class Vehicle:
         # original coordinate position
         # inverse of trans_matrix equals to transpose of trans_matrix
         points = []
+        # 将右后点转换到全局坐标系
         rr_point = trans_matrix.transpose().dot(
             right_rear) + np.array([[x], [y]])
         rf_point = trans_matrix.transpose().dot(
@@ -119,6 +121,7 @@ class Vehicle:
         points.append([lr_point[0], lr_point[1]])
         points.append([rr_point[0], rr_point[1]])
 
+        # 返回由全局坐标系下的 车辆右后-右前-左前-左后-右后点 组成的数组
         return np.array(points)
 
 
@@ -177,6 +180,7 @@ class Map:
                                   math.floor(self.case.xmax),
                                   math.floor(self.case.ymin),
                                   math.floor(self.case.ymax)], dtype=np.float64)
+        print(f"boundary : {self.boundary}")
         # self.detect_obstacle()
         self._discrete_x = 0
         self._discrete_y = 0
@@ -196,6 +200,7 @@ class Map:
         dy_position = np.linspace(self.boundary[2], self.boundary[3], y_index)
         self._discrete_x = dx_position[1] - dx_position[0]
         self._discrete_y = dy_position[1] - dy_position[0]
+        print(f"discrete x = {self._discrete_x}, y = {self._discrete_y}")
         # the position of each point in the park map
         self.map_position = (dx_position, dy_position)  # map_position是一个元组，[0]是dx_position，[1]是dy_position
         # create grid index

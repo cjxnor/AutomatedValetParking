@@ -40,6 +40,7 @@ class Grid:
 
 class Dijkstra:
     def __init__(self, map: Map) -> None:
+        print("Dijkstra init.")
         self.map = map
         self.final_point = (map.case.xf, map.case.yf, map.case.thetaf)
         self.open_list = queue.PriorityQueue()
@@ -57,27 +58,32 @@ class Dijkstra:
         # between the current node(terminate node) and the final node.
         initial_grid_x = np.float64(self.final_point[0])    # 终点x
         initial_grid_y = np.float64(self.final_point[1])
-        terminate_grid_x = np.float64(node_x)   # 起点x
+        print(f"initial x : {initial_grid_x}, y : {initial_grid_y}")
+        terminate_grid_x = np.float64(node_x)   # 终止点是输入的点x
         terminate_grid_y = np.float64(node_y)
+        print(f"terminate x : {terminate_grid_x}, y : {terminate_grid_y}")
         # initialize openlist and closedlist
         initial_grid_id = self.map.convert_position_to_index(initial_grid_x,
                                                              initial_grid_y)
+        print(f"intial_grid_id : {initial_grid_id}")
         initial_grid = Grid(initial_grid_id, initial_grid_x, initial_grid_y,
                             distance=0, father_id=0)
 
         self.closedlist.append(initial_grid)
         self.terminate_grid_id = self.map.convert_position_to_index(
             terminate_grid_x, terminate_grid_y)
+        print(f"terminate_grid_id : {self.terminate_grid_id}")
 
         return initial_grid
 
     def update_closedlist(self):
         # find the minimum distance in the openlist and
         # add it into the closedlist
-        next_grid = self.open_list.get()    # 优先队列
+        next_grid = self.open_list.get()    # 优先队列获取代价最小的点，代价就是叠加的距离
         if next_grid.grid_id == self.terminate_grid_id:
             self.find_terminate = True
         self.closedlist.append(next_grid)
+        print(f"closedlist size : {len(self.closedlist)}")
 
         return next_grid
 
@@ -205,14 +211,14 @@ class Dijkstra:
         '''
         # initial map
         self.find_terminate = False
-        current_grid = self.initial_map(node_x, node_y) # 返回终点，从终点开始
-        while not self.find_terminate:
+        current_grid = self.initial_map(node_x, node_y) # 返回终点，从终点开始，terminate是input点，这里input是起点
+        while not self.find_terminate:  # 扩展到terminate点就结束
             # expand grid and update openlist
             self.update_openlist(current_grid)
             # get the next grid
             current_grid = self.update_closedlist() # current_grid是代价最小的grid
 
-        # 退出while的current_grid是起点
+        # 退出while时说明扩展到了terminate点（这里是起点），current_grid是起点，distance是起点到终点的代价
         return current_grid.distance, self.closedlist
 
     def add_grid_to_openlist(self, gridx, gridy, priority, father_id):

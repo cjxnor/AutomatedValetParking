@@ -27,7 +27,7 @@ class path_opti:
         self.map = park_map
         self.vehicle = vehicle
         self.matrix_dict = dict()
-        self.expand_dis = config['expand_dis']  # m
+        self.expand_dis = config['expand_dis']  # expand_dis: 0.8 #m
         self.config = config
 
     def formate_matrix(self,

@@ -39,21 +39,26 @@ def main(file, config):
     planner = path_planner.PathPlanner(config=config,
                                        map=park_map,
                                        vehicle=ego_vehicle)
+    print("init planner.")
 
     # create path optimizer
     path_optimizer = path_optimazition.path_opti(park_map, ego_vehicle, config)
+    print("init path_optimizer.")
 
     # create path interpolation
     interplotor = path_interpolation.interpolation(
         config=config, map=park_map, vehicle=ego_vehicle)
+    print("init path_interpolation.")
 
     # create velocity planner
     v_planner = velocity_planner.VelocityPlanner(vehicle=ego_vehicle,
                                                  velocity_func_type=config['velocity_func_type'])
+    print("init velocity_planner.")
 
-    # create path optimization planner
+    # create path optimization planner  optimal control problem
     ocp_planner = ocp_optimization.ocp_optimization(
         park_map=park_map, vehicle=ego_vehicle, config=config)
+    print("init ocp_optimization.")
 
     # rapare memory to store path
     final_opt_path = []  # store the optimization path

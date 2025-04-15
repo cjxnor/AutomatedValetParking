@@ -73,7 +73,7 @@ class hybrid_a_star:
                  config: dict,
                  park_map: Map,
                  vehicle: Vehicle) -> None:
-
+        print("hybrid_a_star init.")
         # create vehicle
         self.vehicle = vehicle
 
@@ -87,7 +87,7 @@ class hybrid_a_star:
 
         # caculate heuristic and store h value
         self.heuristic = Dijkstra(park_map)
-        _, self.h_value_list = self.heuristic.compute_path(
+        _, self.h_value_list = self.heuristic.compute_path(     # 返回(xf,yf)到(x0,y0)的(代价,closedlist)
             node_x=park_map.case.x0, node_y=park_map.case.y0)   # (x0, y0)是起点的坐标
 
         # default settings
@@ -95,8 +95,8 @@ class hybrid_a_star:
         self.config = config
         self.open_list = queue.PriorityQueue()
         self.closed_list = []
-        self.dt = config['dt']
-        self.ddt = config['trajectory_dt']
+        self.dt = config['dt']      # dt: 0.6
+        self.ddt = config['trajectory_dt']  # trajectory_dt: 0.2
 
         # initial node
         self.initial_node = Node(x=park_map.case.x0,
@@ -111,7 +111,7 @@ class hybrid_a_star:
         self.open_list.put(self.initial_node)
         self.initial_node.in_open = True
 
-        # max delta heading
+        # max delta heading    max_v:2.5 m/s  kappa=tan(a)/L 圆弧S=theta*R -> dtheta/dt = kappa*dS/dt -> dtheta = kappa*dv*dt
         self.max_delta_heading = self.vehicle.max_v * \
             np.tan(self.vehicle.max_steering_angle) / self.vehicle.lw * self.dt
 
@@ -297,6 +297,7 @@ class hybrid_a_star:
 
         return h_value
 
+    # 这里应该用 Tuple[...] 来准确描述返回值结构
     def try_reach_goal(self, current_node: Node) -> bool:
         '''
         if node is near the goal node, we check whether the rs curve could reach it
@@ -307,7 +308,7 @@ class hybrid_a_star:
         collision_p = None
         distance = np.sqrt((current_node.x - self.goal_node.x)
                            ** 2+(current_node.y-self.goal_node.y)**2)
-        if distance < self.config['flag_radius']:
+        if distance < self.config['flag_radius']:   # flag_radius: 18
             in_radius = True
             rs_path, collision, collision_p = self.try_rs_curve(current_node)
 

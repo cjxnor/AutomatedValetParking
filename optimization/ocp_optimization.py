@@ -31,7 +31,7 @@ class ocp_optimization:
         self.config = config
         self.map = park_map
         self.vehicle = vehicle
-        self.expand_dis = config['expand_dis']  # m
+        self.expand_dis = config['expand_dis']  # expand_dis: 0.8m
 
     def compute_collision_H(self, path):
         '''

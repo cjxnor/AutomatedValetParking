@@ -33,7 +33,7 @@ class collision_checker:
         Note: vehicle boundary is expanded
         '''
 
-        # create_polygon
+        # create_polygon    返回由全局坐标系下的 车辆右后-右前-左前-左后-右后点 组成的数组
         vehicle_boundary = self.vehicle.create_anticlockpoint(
             x=node_x, y=node_y, theta=theta, config=self.config)
 
@@ -57,15 +57,15 @@ class collision_checker:
         obstacle_position_y = self.map.map_position[1][obstacle_index[1]]
 
         # find those obstacles point in the AABB square
-        near_x_position = obstacle_position_x[np.where(
+        near_x_position = obstacle_position_x[np.where(     # 找到位于AABB内的所有障碍物的x
             (obstacle_position_x >= x_min) & (obstacle_position_x <= x_max))]
-        near_y_position = obstacle_position_y[np.where(
+        near_y_position = obstacle_position_y[np.where(     # 找到x对应的y
             (obstacle_position_x >= x_min) & (obstacle_position_x <= x_max))]
 
         # determine y
-        near_obstacle_x = near_x_position[np.where(
+        near_obstacle_x = near_x_position[np.where(         # 找到y位于AABB内的所有x
             (near_y_position >= y_min) & (near_y_position <= y_max))]
-        near_obstacle_y = near_y_position[np.where(
+        near_obstacle_y = near_y_position[np.where(         # 找到x对应的y
             (near_y_position >= y_min) & (near_y_position <= y_max))]
 
         near_obstacle_range = [near_obstacle_x, near_obstacle_y]

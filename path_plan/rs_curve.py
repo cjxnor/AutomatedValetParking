@@ -96,6 +96,7 @@ class PATH:
         self.directions = directions  # forward: 1, backward:-1
 
 
+# STEP_SIZE = 0.5
 def calc_optimal_path(sx, sy, syaw, gx, gy, gyaw, maxc, step_size=STEP_SIZE):
     paths = calc_all_paths(sx, sy, syaw, gx, gy, gyaw,
                            maxc, step_size=step_size)
@@ -103,6 +104,7 @@ def calc_optimal_path(sx, sy, syaw, gx, gy, gyaw, maxc, step_size=STEP_SIZE):
     minL = paths[0].L
     mini = 0
 
+    # 返回最短的
     for i in range(len(paths)):
         if paths[i].L <= minL:
             minL, mini = paths[i].L, i

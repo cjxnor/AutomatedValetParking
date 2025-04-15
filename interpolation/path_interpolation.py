@@ -31,7 +31,7 @@ class interpolation:
                  map,
                  config: dict) -> None:
         self.map = map
-        self.insert_num = config["velocity_plan_num"]
+        self.insert_num = config["velocity_plan_num"]   # velocity_plan_num: 100 # num
         self.vehicle = vehicle
 
     def cubic_interpolation(self,

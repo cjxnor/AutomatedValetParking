@@ -20,6 +20,8 @@ from enum import Enum, unique
 e = 1e-10
 
 
+# @unique 是 Python 标准库 enum 模块中的一个装饰器，用于确保枚举类中的成员值唯一
+# @unique 会检查 velocity_type 中是否有重复的值。如果有重复，就会抛出 ValueError
 @unique
 class velocity_type(Enum):
     sin_func = 1
